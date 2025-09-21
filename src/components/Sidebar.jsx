@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const TAB_LABELS = {
   feed: "Everyone's Goals",
@@ -29,20 +29,54 @@ function Sidebar({
 }) {
   const [draftName, setDraftName] = useState(username);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const saveTimeoutRef = useRef(null);
+
+  const clearSaveTimeout = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+  };
 
   useEffect(() => {
     setDraftName(username);
+    setIsSaved(false);
+    clearSaveTimeout();
   }, [username]);
 
   useEffect(() => {
     setHasHydrated(true);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      clearSaveTimeout();
+    };
+  }, []);
+
+  const commitUsername = () => {
+    const trimmedName = draftName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    onUsernameSave(trimmedName);
+    setIsSaved(true);
+    clearSaveTimeout();
+    saveTimeoutRef.current = setTimeout(() => {
+      setIsSaved(false);
+      saveTimeoutRef.current = null;
+    }, 2000);
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (draftName.trim()) {
-      onUsernameSave(draftName);
-    }
+    commitUsername();
+  };
+
+  const handleInlineSave = () => {
+    commitUsername();
   };
 
   const handleTabClick = (tabKey) => {
@@ -110,12 +144,31 @@ function Sidebar({
       <form className="sidebar-footer" onSubmit={handleSubmit}>
         <label className="username-label">
           Username
-          <input
-            type="text"
-            value={draftName}
-            onChange={(event) => setDraftName(event.target.value)}
-            placeholder="Your display name"
-          />
+          <div className="username-input-row">
+            <input
+              type="text"
+              value={draftName}
+              onChange={(event) => {
+                setDraftName(event.target.value);
+                setIsSaved(false);
+                clearSaveTimeout();
+              }}
+              placeholder="Your display name"
+            />
+            <button
+              type="button"
+              className="icon-button username-save-button"
+              onClick={handleInlineSave}
+              aria-label="Save username"
+            >
+              <span aria-hidden="true">💾</span>
+            </button>
+          </div>
+          {isSaved ? (
+            <span className="username-saved-hint" role="status">
+              <span aria-hidden="true">✔</span> Saved
+            </span>
+          ) : null}
         </label>
         <div className="footer-actions">
           <button type="submit" className="secondary-button">

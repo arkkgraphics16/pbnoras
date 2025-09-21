@@ -231,6 +231,48 @@ textarea {
   color: var(--c-primary);
 }
 
+.username-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.username-input-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem;
+  min-width: 42px;
+  min-height: 42px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: var(--c-text-2);
+}
+
+.icon-button:hover,
+.icon-button:focus-visible {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.username-save-button {
+  box-shadow: none;
+}
+
+.username-saved-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #62d26f;
+  font-weight: 600;
+}
+
 .footer-actions {
   display: flex;
   gap: 0.75rem;
