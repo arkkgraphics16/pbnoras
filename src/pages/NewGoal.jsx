@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const typeOptions = [
   { value: 'one', label: 'One-Time' },
@@ -14,12 +14,28 @@ function NewGoal({ onCreate, submitting, defaultType }) {
   const [deadline, setDeadline] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [error, setError] = useState('');
+  const textareaRef = useRef(null);
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const { lineHeight } = window.getComputedStyle(textarea);
+    const parsedLineHeight = parseFloat(lineHeight) || 0;
+    textarea.style.height = 'auto';
+    const maxHeight = parsedLineHeight ? parsedLineHeight * 10 : textarea.scrollHeight;
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
+  };
 
   useEffect(() => {
     if (typeOptions.some((option) => option.value === defaultType)) {
       setType(defaultType);
     }
   }, [defaultType]);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [text]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -45,8 +61,10 @@ function NewGoal({ onCreate, submitting, defaultType }) {
         <label>
           Goal statement
           <textarea
+            ref={textareaRef}
             value={text}
             onChange={(event) => setText(event.target.value)}
+            onInput={adjustTextareaHeight}
             rows={4}
             placeholder="Ship the new onboarding flow by Friday"
             required

@@ -65,7 +65,8 @@ button {
 }
 
 textarea {
-  resize: vertical;
+  resize: none;
+  overflow-y: auto;
 }
 
 .app-shell {

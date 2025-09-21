@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const TYPE_LABELS = {
   one: 'One-Time',
@@ -16,11 +16,29 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [form, setForm] = useState(() => mapGoalToForm(goal));
+  const textAreaRef = useRef(null);
+
+  const adjustTextareaHeight = () => {
+    const textarea = textAreaRef.current;
+    if (!textarea) return;
+    const { lineHeight } = window.getComputedStyle(textarea);
+    const parsedLineHeight = parseFloat(lineHeight) || 0;
+    textarea.style.height = 'auto';
+    const maxHeight = parsedLineHeight ? parsedLineHeight * 10 : textarea.scrollHeight;
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
+  };
 
   useEffect(() => {
     setForm(mapGoalToForm(goal));
     setIsExpanded(false);
   }, [goal]);
+
+  useEffect(() => {
+    if (isEditing) {
+      adjustTextareaHeight();
+    }
+  }, [form.text, isEditing]);
 
   const deadlineText = useMemo(() => {
     if (!goal.deadline) return 'No deadline';
@@ -112,7 +130,14 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
         <div className="goal-edit-form">
           <label>
             Text
-            <textarea name="text" value={form.text} onChange={handleChange} rows={3} />
+            <textarea
+              ref={textAreaRef}
+              name="text"
+              value={form.text}
+              onChange={handleChange}
+              onInput={adjustTextareaHeight}
+              rows={3}
+            />
           </label>
           <label>
             Type
