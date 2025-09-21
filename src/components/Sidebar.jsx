@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const TAB_LABELS = {
   feed: "Everyone's Goals",
@@ -22,12 +22,21 @@ function Sidebar({
   username,
   onUsernameSave,
   onLogout,
+  isOpen,
+  isDesktop,
+  onClose,
+  drawerRef,
 }) {
   const [draftName, setDraftName] = useState(username);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
     setDraftName(username);
   }, [username]);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -36,8 +45,40 @@ function Sidebar({
     }
   };
 
+  const handleTabClick = (tabKey) => {
+    onTabChange(tabKey);
+    if (!isDesktop) {
+      onClose();
+    }
+  };
+
+  const drawerClasses = useMemo(() => {
+    const classes = ['sidebar'];
+    if (!isDesktop) {
+      classes.push('drawer');
+      if (isOpen) {
+        classes.push('open');
+      }
+    }
+    return classes.join(' ');
+  }, [isDesktop, isOpen]);
+
+  const assignRef = (node) => {
+    if (!drawerRef) return;
+    drawerRef.current = node;
+  };
+
+  const dialogProps = !isDesktop && isOpen ? { role: 'dialog', 'aria-modal': 'true' } : {};
+
   return (
-    <aside className="sidebar">
+    <aside
+      id="sidebar"
+      className={drawerClasses}
+      ref={assignRef}
+      {...dialogProps}
+      tabIndex={!isDesktop ? -1 : undefined}
+      aria-hidden={!isDesktop && !isOpen && hasHydrated ? 'true' : undefined}
+    >
       <div className="logo-block">
         <h2>PBN Kron</h2>
         <p className="tagline">Align your goals with the crew.</p>
@@ -48,7 +89,7 @@ function Sidebar({
             key={tabKey}
             type="button"
             className={`tab-button ${activeTab === tabKey ? 'active' : ''}`}
-            onClick={() => onTabChange(tabKey)}
+            onClick={() => handleTabClick(tabKey)}
           >
             {label}
           </button>
