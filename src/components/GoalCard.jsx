@@ -45,9 +45,13 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
   const deadlineText = useMemo(() => {
     if (!deadlineDate) return 'No deadline';
     try {
-      return deadlineDate.toLocaleDateString();
+      return deadlineDate.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
     } catch (err) {
-      return 'No deadline';
+      try {
+        return deadlineDate.toLocaleString();
+      } catch (error) {
+        return 'No deadline';
+      }
     }
   }, [deadlineDate]);
 
@@ -73,8 +77,6 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
     const { name, value, type, checked } = event.target;
     if (type === 'checkbox') {
       setForm((prev) => ({ ...prev, [name]: checked }));
-    } else if (name === 'deadline') {
-      setForm((prev) => ({ ...prev, deadline: value ? new Date(value) : null }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -82,7 +84,14 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
 
   const handleSave = () => {
     if (!onSave) return;
-    const maybePromise = onSave(goal.id, form, goal);
+    const payload = {
+      text: form.text,
+      type: form.type,
+      status: form.status,
+      public: form.public,
+      deadline: combineDateAndTime(form.deadlineDate, form.deadlineTime),
+    };
+    const maybePromise = onSave(goal.id, payload, goal);
     if (maybePromise && typeof maybePromise.then === 'function') {
       maybePromise.then(() => setIsEditing(false));
     } else {
@@ -99,24 +108,37 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
         <div>
           <p className="goal-type">{typeLabel}</p>
           <div className="goal-text-row">
-            <h3
-              className={`goal-text ${
-                isExpanded ? 'goal-text--expanded' : 'goal-text--collapsed'
-              }`}
-            >
-              {isEditing ? form.text : goal.text}
-            </h3>
-            <button
-              type="button"
-              className="goal-text-toggle"
-              aria-label={isExpanded ? 'Collapse goal text' : 'Expand goal text'}
-              aria-expanded={isExpanded}
-              onClick={() => setIsExpanded((prev) => !prev)}
-            >
-              <span aria-hidden="true" className="goal-text-toggle__icon">
-                ▾
-              </span>
-            </button>
+            {isEditing ? (
+              <textarea
+                className="goal-edit-textarea"
+                name="text"
+                value={form.text}
+                onChange={handleChange}
+                rows={10}
+                aria-label="Goal statement"
+              />
+            ) : (
+              <h3
+                className={`goal-text ${
+                  isExpanded ? 'goal-text--expanded' : 'goal-text--collapsed'
+                }`}
+              >
+                {goal.text}
+              </h3>
+            )}
+            {!isEditing && (
+              <button
+                type="button"
+                className="goal-text-toggle"
+                aria-label={isExpanded ? 'Collapse goal text' : 'Expand goal text'}
+                aria-expanded={isExpanded}
+                onClick={() => setIsExpanded((prev) => !prev)}
+              >
+                <span aria-hidden="true" className="goal-text-toggle__icon">
+                  ▾
+                </span>
+              </button>
+            )}
           </div>
         </div>
         {editable && (
@@ -143,10 +165,6 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
       {editable && isEditing && (
         <div className="goal-edit-form">
           <label>
-            Text
-            <textarea name="text" value={form.text} onChange={handleChange} rows={3} />
-          </label>
-          <label>
             Type
             <select name="type" value={form.type} onChange={handleChange}>
               <option value="one">One-Time</option>
@@ -164,12 +182,20 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
           </label>
           <label>
             Deadline
-            <input
-              type="date"
-              name="deadline"
-              value={form.deadline ? formatDateInput(form.deadline) : ''}
-              onChange={handleChange}
-            />
+            <div className="deadline-inputs">
+              <input
+                type="date"
+                name="deadlineDate"
+                value={form.deadlineDate}
+                onChange={handleChange}
+              />
+              <input
+                type="time"
+                name="deadlineTime"
+                value={form.deadlineTime}
+                onChange={handleChange}
+              />
+            </div>
           </label>
           <label className="public-toggle">
             <input
@@ -199,17 +225,32 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
 }
 
 function mapGoalToForm(goal) {
+  const baseDeadline = getDateValue(goal.deadline);
   return {
     text: goal.text || '',
     type: goal.type || 'one',
     status: goal.status || 'doing',
-    deadline: goal.deadline
-      ? goal.deadline.toDate
-        ? goal.deadline.toDate()
-        : new Date(goal.deadline)
-      : null,
+    deadlineDate: baseDeadline ? formatDateInput(baseDeadline) : '',
+    deadlineTime: baseDeadline ? formatTimeInput(baseDeadline) : '',
     public: Boolean(goal.public),
   };
+}
+
+function getDateValue(deadline) {
+  if (!deadline) return null;
+  try {
+    if (deadline instanceof Date) {
+      return Number.isNaN(deadline.getTime()) ? null : deadline;
+    }
+    if (typeof deadline.toDate === 'function') {
+      const fromTimestamp = deadline.toDate();
+      return Number.isNaN(fromTimestamp.getTime()) ? null : fromTimestamp;
+    }
+    const parsed = new Date(deadline);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  } catch (error) {
+    return null;
+  }
 }
 
 function formatDateInput(date) {
@@ -217,6 +258,31 @@ function formatDateInput(date) {
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function formatTimeInput(date) {
+  const hours = `${date.getHours()}`.padStart(2, '0');
+  const minutes = `${date.getMinutes()}`.padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+function combineDateAndTime(dateString, timeString) {
+  if (!dateString) return null;
+  const [year, month, day] = dateString.split('-').map(Number);
+  if ([year, month, day].some((part) => Number.isNaN(part))) {
+    return null;
+  }
+  let hours = 0;
+  let minutes = 0;
+  if (timeString) {
+    const [timeHours, timeMinutes] = timeString.split(':').map(Number);
+    if (!Number.isNaN(timeHours)) hours = timeHours;
+    if (!Number.isNaN(timeMinutes)) minutes = timeMinutes;
+  }
+  const date = new Date();
+  date.setFullYear(year, month - 1, day);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
 }
 
 export default GoalCard;

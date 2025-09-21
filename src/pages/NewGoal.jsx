@@ -12,23 +12,23 @@ function NewGoal({ onCreate, submitting, defaultType }) {
   const [type, setType] = useState(
     typeOptions.some((option) => option.value === defaultType) ? defaultType : 'one'
   );
-  const [deadline, setDeadline] = useState('');
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [deadlineTime, setDeadlineTime] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [error, setError] = useState('');
 
-  const deadlineDate = useMemo(() => {
-    if (!deadline) return null;
-    const parsed = new Date(deadline);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }, [deadline]);
+  const deadlineDateTime = useMemo(
+    () => combineDateAndTime(deadlineDate, deadlineTime),
+    [deadlineDate, deadlineTime]
+  );
 
-  const countdown = useCountdown(deadlineDate);
+  const countdown = useCountdown(deadlineDateTime);
 
   const countdownLabel = useMemo(() => {
-    if (!deadlineDate || !countdown) return '';
+    if (!deadlineDateTime || !countdown) return '';
     if (countdown.isExpired) return 'Deadline passed';
     return `Time remaining: ${formatCountdown(countdown)}`;
-  }, [deadlineDate, countdown]);
+  }, [deadlineDateTime, countdown]);
 
   useEffect(() => {
     if (typeOptions.some((option) => option.value === defaultType)) {
@@ -43,9 +43,15 @@ function NewGoal({ onCreate, submitting, defaultType }) {
       return;
     }
     setError('');
-    await onCreate({ text: text.trim(), type, deadline: deadlineDate, isPublic });
+    await onCreate({
+      text: text.trim(),
+      type,
+      deadline: deadlineDateTime,
+      isPublic,
+    });
     setText('');
-    setDeadline('');
+    setDeadlineDate('');
+    setDeadlineTime('');
     setIsPublic(true);
   };
 
@@ -61,7 +67,7 @@ function NewGoal({ onCreate, submitting, defaultType }) {
           <textarea
             value={text}
             onChange={(event) => setText(event.target.value)}
-            rows={4}
+            rows={10}
             placeholder="Ship the new onboarding flow by Friday"
             required
           />
@@ -78,9 +84,20 @@ function NewGoal({ onCreate, submitting, defaultType }) {
         </label>
         <label>
           Deadline
-          <input type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} />
+          <div className="deadline-inputs">
+            <input
+              type="date"
+              value={deadlineDate}
+              onChange={(event) => setDeadlineDate(event.target.value)}
+            />
+            <input
+              type="time"
+              value={deadlineTime}
+              onChange={(event) => setDeadlineTime(event.target.value)}
+            />
+          </div>
         </label>
-        {deadlineDate && countdownLabel && (
+        {deadlineDateTime && countdownLabel && (
           <p className="deadline-preview" aria-live="polite">
             {countdownLabel}
           </p>
@@ -103,3 +120,22 @@ function NewGoal({ onCreate, submitting, defaultType }) {
 }
 
 export default NewGoal;
+
+function combineDateAndTime(dateString, timeString) {
+  if (!dateString) return null;
+  const [year, month, day] = dateString.split('-').map(Number);
+  if ([year, month, day].some((part) => Number.isNaN(part))) {
+    return null;
+  }
+  let hours = 0;
+  let minutes = 0;
+  if (timeString) {
+    const [timeHours, timeMinutes] = timeString.split(':').map(Number);
+    if (!Number.isNaN(timeHours)) hours = timeHours;
+    if (!Number.isNaN(timeMinutes)) minutes = timeMinutes;
+  }
+  const date = new Date();
+  date.setFullYear(year, month - 1, day);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
