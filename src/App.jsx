@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Timestamp,
   collection,
@@ -41,6 +41,31 @@ function App() {
   const [myGoals, setMyGoals] = useState([]);
   const [myGoalsLoading, setMyGoalsLoading] = useState(true);
   const [creatingGoal, setCreatingGoal] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 1025px)').matches;
+  });
+  const drawerRef = useRef(null);
+  const hamburgerRef = useRef(null);
+  const wasDrawerOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const media = window.matchMedia('(min-width: 1025px)');
+    const handleChange = (event) => {
+      setIsDesktop(event.matches);
+    };
+    media.addEventListener('change', handleChange);
+    setIsDesktop(media.matches);
+    return () => media.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (isDesktop) {
+      setIsDrawerOpen(false);
+    }
+  }, [isDesktop]);
 
   useEffect(() => {
     persistenceReady.finally(() => setAuthReady(true));
@@ -234,6 +259,85 @@ function App() {
     signOut(auth);
   };
 
+  useEffect(() => {
+    if (!isDrawerOpen || isDesktop) {
+      document.body.classList.remove('drawer-open');
+      if (wasDrawerOpenRef.current && !isDrawerOpen && !isDesktop) {
+        hamburgerRef.current?.focus();
+      }
+      wasDrawerOpenRef.current = false;
+      return undefined;
+    }
+
+    wasDrawerOpenRef.current = true;
+    document.body.classList.add('drawer-open');
+    const focusableSelector =
+      'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusDrawer = () => {
+      const focusable = drawerRef.current?.querySelectorAll(focusableSelector);
+      const first = focusable && focusable.length > 0 ? focusable[0] : null;
+      if (first && 'focus' in first) {
+        first.focus({ preventScroll: true });
+      } else if (drawerRef.current) {
+        drawerRef.current.focus({ preventScroll: true });
+      }
+    };
+    const focusTimeout = window.setTimeout(focusDrawer, 0);
+    return () => {
+      window.clearTimeout(focusTimeout);
+      document.body.classList.remove('drawer-open');
+    };
+  }, [isDrawerOpen, isDesktop]);
+
+  useEffect(() => {
+    if (!isDrawerOpen || isDesktop) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsDrawerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDrawerOpen, isDesktop]);
+
+  useEffect(() => {
+    if (!isDrawerOpen || isDesktop) return undefined;
+    const focusableSelector =
+      'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const drawerEl = drawerRef.current;
+    if (!drawerEl) return undefined;
+    const handleTrap = (event) => {
+      if (event.key !== 'Tab') return;
+      const focusable = drawerEl.querySelectorAll(focusableSelector);
+      if (!focusable.length) {
+        event.preventDefault();
+        drawerEl.focus({ preventScroll: true });
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleTrap);
+    return () => document.removeEventListener('keydown', handleTrap);
+  }, [isDrawerOpen, isDesktop]);
+
+  useEffect(
+    () => () => {
+      document.body.classList.remove('drawer-open');
+    },
+    []
+  );
+
   if (!authReady) {
     return (
       <div className="loading-screen">
@@ -248,8 +352,51 @@ function App() {
 
   const sidebarUsername = profile?.username || user.email?.split('@')[0] || '';
 
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false);
+  };
+
+  const toggleDrawer = () => {
+    setIsDrawerOpen((prev) => !prev);
+    if (!isDrawerOpen) {
+      wasDrawerOpenRef.current = true;
+    }
+  };
+
   return (
     <div className="app-shell">
+      {!isDesktop && (
+        <header className="app-bar">
+          <button
+            type="button"
+            className="hamburger"
+            aria-label={isDrawerOpen ? 'Close menu' : 'Open menu'}
+            aria-controls="sidebar"
+            aria-expanded={isDrawerOpen}
+            onClick={toggleDrawer}
+            ref={hamburgerRef}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                d="M4 6h16M4 12h16M4 18h16"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+          <div className="app-bar__title">PBN Kron</div>
+          <div className="app-bar__spacer" aria-hidden="true" />
+        </header>
+      )}
+
+      {!isDesktop && (
+        <div
+          className={`backdrop ${isDrawerOpen ? 'visible' : ''}`}
+          onClick={handleCloseDrawer}
+        />
+      )}
+
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -259,7 +406,12 @@ function App() {
         username={sidebarUsername}
         onUsernameSave={handleUsernameChange}
         onLogout={handleLogout}
+        isOpen={isDrawerOpen}
+        isDesktop={isDesktop}
+        onClose={handleCloseDrawer}
+        drawerRef={drawerRef}
       />
+
       <main className="content-area">
         {activeTab === TABS.FEED && (
           <Feed goals={filteredPublicGoals} loading={publicLoading} />
