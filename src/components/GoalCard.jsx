@@ -82,6 +82,16 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
     }
   };
 
+  const handleStartEdit = () => {
+    setForm(mapGoalToForm(goal));
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setForm(mapGoalToForm(goal));
+    setIsEditing(false);
+  };
+
   const handleSave = () => {
     if (!onSave) return;
     const payload = {
@@ -101,6 +111,11 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
 
   const typeLabel = TYPE_LABELS[goal.type] || 'Goal';
   const statusLabel = STATUS_LABELS[goal.status] || goal.status;
+
+  const showViewMeta = !isEditing || !editable;
+  const showCreatedMeta = Boolean(createdAtText);
+  const showAuthorMeta = Boolean(goal.authorName);
+  const shouldRenderMeta = showViewMeta || showCreatedMeta || showAuthorMeta;
 
   return (
     <article className={`goal-card ${goal.status}`}>
@@ -141,27 +156,33 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
             )}
           </div>
         </div>
-        {editable && (
+        {editable && !isEditing && (
           <button
             type="button"
             className="secondary-button"
-            onClick={() => setIsEditing((prev) => !prev)}
+            onClick={handleStartEdit}
           >
-            {isEditing ? 'Cancel' : 'Edit'}
+            Edit
           </button>
         )}
       </header>
-      <div className="goal-meta">
-        <span>Deadline: {deadlineText}</span>
-        {deadlineDate && countdownLabel && (
-          <span className="goal-countdown" aria-live="polite">
-            {countdownLabel}
-          </span>
-        )}
-        <span>Status: {statusLabel}</span>
-        {createdAtText && <span>Created: {createdAtText}</span>}
-        {goal.authorName && <span>By: {goal.authorName}</span>}
-      </div>
+      {shouldRenderMeta && (
+        <div className="goal-meta">
+          {showViewMeta && (
+            <>
+              <span>Deadline: {deadlineText}</span>
+              {deadlineDate && countdownLabel && (
+                <span className="goal-countdown" aria-live="polite">
+                  {countdownLabel}
+                </span>
+              )}
+              <span>Status: {statusLabel}</span>
+            </>
+          )}
+          {showCreatedMeta && <span>Created: {createdAtText}</span>}
+          {showAuthorMeta && <span>By: {goal.authorName}</span>}
+        </div>
+      )}
       {editable && isEditing && (
         <div className="goal-edit-form">
           <label>
@@ -209,6 +230,9 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
           <div className="goal-edit-actions">
             <button type="button" className="primary-button" onClick={handleSave}>
               Save
+            </button>
+            <button type="button" className="secondary-button" onClick={handleCancel}>
+              Cancel
             </button>
             <button
               type="button"
