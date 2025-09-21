@@ -309,6 +309,51 @@ textarea {
 
 .goal-text {
   margin: 0.35rem 0 0;
+  flex: 1 1 auto;
+}
+
+.goal-text-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+}
+
+.goal-text--collapsed {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.goal-text--expanded {
+  display: block;
+}
+
+.goal-text-toggle {
+  min-height: auto;
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.goal-text-toggle:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+.goal-text-toggle__icon {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.goal-text-toggle[aria-expanded='true'] .goal-text-toggle__icon {
+  transform: rotate(180deg);
 }
 
 .goal-meta {
