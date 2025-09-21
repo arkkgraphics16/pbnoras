@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import useCountdown, { formatCountdown } from '../hooks/useCountdown';
 
 const TYPE_LABELS = {
   one: 'One-Time',
@@ -22,15 +23,41 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
     setIsExpanded(false);
   }, [goal]);
 
-  const deadlineText = useMemo(() => {
-    if (!goal.deadline) return 'No deadline';
+  const deadlineDate = useMemo(() => {
+    if (!goal.deadline) return null;
     try {
-      const date = goal.deadline.toDate ? goal.deadline.toDate() : goal.deadline;
-      return date.toLocaleDateString();
+      if (goal.deadline instanceof Date) {
+        return Number.isNaN(goal.deadline.getTime()) ? null : goal.deadline;
+      }
+
+      if (typeof goal.deadline.toDate === 'function') {
+        const fromTimestamp = goal.deadline.toDate();
+        return Number.isNaN(fromTimestamp.getTime()) ? null : fromTimestamp;
+      }
+
+      const parsed = new Date(goal.deadline);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    } catch (err) {
+      return null;
+    }
+  }, [goal.deadline]);
+
+  const deadlineText = useMemo(() => {
+    if (!deadlineDate) return 'No deadline';
+    try {
+      return deadlineDate.toLocaleDateString();
     } catch (err) {
       return 'No deadline';
     }
-  }, [goal.deadline]);
+  }, [deadlineDate]);
+
+  const countdown = useCountdown(deadlineDate);
+
+  const countdownLabel = useMemo(() => {
+    if (!deadlineDate || !countdown) return '';
+    if (countdown.isExpired) return 'Deadline passed';
+    return `Time remaining: ${formatCountdown(countdown)}`;
+  }, [deadlineDate, countdown]);
 
   const createdAtText = useMemo(() => {
     if (!goal.createdAt) return '';
@@ -104,6 +131,11 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
       </header>
       <div className="goal-meta">
         <span>Deadline: {deadlineText}</span>
+        {deadlineDate && countdownLabel && (
+          <span className="goal-countdown" aria-live="polite">
+            {countdownLabel}
+          </span>
+        )}
         <span>Status: {statusLabel}</span>
         {createdAtText && <span>Created: {createdAtText}</span>}
         {goal.authorName && <span>By: {goal.authorName}</span>}
