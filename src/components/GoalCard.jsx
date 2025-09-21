@@ -14,10 +14,12 @@ const STATUS_LABELS = {
 
 function GoalCard({ goal, editable = false, onSave, onDelete }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [form, setForm] = useState(() => mapGoalToForm(goal));
 
   useEffect(() => {
     setForm(mapGoalToForm(goal));
+    setIsExpanded(false);
   }, [goal]);
 
   const deadlineText = useMemo(() => {
@@ -69,7 +71,26 @@ function GoalCard({ goal, editable = false, onSave, onDelete }) {
       <header className="goal-header">
         <div>
           <p className="goal-type">{typeLabel}</p>
-          <h3 className="goal-text">{isEditing ? form.text : goal.text}</h3>
+          <div className="goal-text-row">
+            <h3
+              className={`goal-text ${
+                isExpanded ? 'goal-text--expanded' : 'goal-text--collapsed'
+              }`}
+            >
+              {isEditing ? form.text : goal.text}
+            </h3>
+            <button
+              type="button"
+              className="goal-text-toggle"
+              aria-label={isExpanded ? 'Collapse goal text' : 'Expand goal text'}
+              aria-expanded={isExpanded}
+              onClick={() => setIsExpanded((prev) => !prev)}
+            >
+              <span aria-hidden="true" className="goal-text-toggle__icon">
+                ▾
+              </span>
+            </button>
+          </div>
         </div>
         {editable && (
           <button
