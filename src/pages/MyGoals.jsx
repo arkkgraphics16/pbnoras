@@ -1,10 +1,14 @@
 import GoalCard from '../components/GoalCard.jsx';
+import FilterTabs from '../components/FilterTabs.jsx';
 
-function MyGoals({ goals, loading, onUpdate, onDelete }) {
+function MyGoals({ goals, loading, onUpdate, onDelete, filter, onFilterChange, filters }) {
   return (
     <section className="page">
       <header className="page-header">
-        <h1>My Goals</h1>
+        <div className="page-header__title-row">
+          <h1>My Goals</h1>
+          <FilterTabs value={filter} onChange={onFilterChange} filters={filters} />
+        </div>
         <p>Track, adjust, and broadcast your personal commitments.</p>
       </header>
       {loading ? (
