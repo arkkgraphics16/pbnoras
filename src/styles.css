@@ -231,6 +231,64 @@ textarea {
   color: var(--c-primary);
 }
 
+.username-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.username-input-row input {
+  flex: 1 1 auto;
+}
+
+.username-save-button {
+  min-height: 40px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--c-text-2);
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.username-save-button:not(:disabled):hover,
+.username-save-button:not(:disabled):focus-visible {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.username-save-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.65);
+  outline-offset: 2px;
+}
+
+.username-save-button[aria-busy='true'] {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.username-feedback {
+  min-height: 1.25rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.username-feedback__message {
+  display: inline-block;
+  padding-top: 0.25rem;
+}
+
+.username-feedback__message--error {
+  color: #ffd7d7;
+}
+
+.username-feedback__message--success {
+  color: #c7ffe0;
+}
+
 .footer-actions {
   display: flex;
   gap: 0.75rem;
@@ -310,6 +368,11 @@ textarea {
 .goal-text {
   margin: 0.35rem 0 0;
   flex: 1 1 auto;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .goal-text-row {
@@ -383,6 +446,12 @@ textarea {
   font-size: 0.95rem;
 }
 
+.goal-edit-form textarea {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
 .goal-edit-actions {
   display: flex;
   gap: 0.75rem;
@@ -414,6 +483,12 @@ textarea {
 .goal-form label {
   display: grid;
   gap: 0.5rem;
+}
+
+.goal-form textarea {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 .page-empty {
