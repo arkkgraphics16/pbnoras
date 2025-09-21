@@ -6,19 +6,9 @@ const TAB_LABELS = {
   mine: 'My Goals',
 };
 
-const FILTER_LABELS = {
-  all: 'All',
-  one: 'One-Time',
-  daily: 'Daily',
-  weekly: 'Weekly',
-};
-
 function Sidebar({
   activeTab,
   onTabChange,
-  filter,
-  onFilterChange,
-  filters,
   username,
   onUsernameSave,
   onLogout,
@@ -156,18 +146,6 @@ function Sidebar({
           </button>
         ))}
       </nav>
-      <div className="filter-chips">
-        {filters.map((key) => (
-          <button
-            key={key}
-            type="button"
-            className={`chip ${filter === key ? 'active' : ''}`}
-            onClick={() => onFilterChange(key)}
-          >
-            {FILTER_LABELS[key]}
-          </button>
-        ))}
-      </div>
       <form className="sidebar-footer" onSubmit={handleSubmit}>
         <label className="username-label">
           Username

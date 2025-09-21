@@ -35,7 +35,8 @@ function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState(TABS.FEED);
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [publicFilter, setPublicFilter] = useState('all');
+  const [myFilter, setMyFilter] = useState('all');
   const [publicGoals, setPublicGoals] = useState([]);
   const [publicLoading, setPublicLoading] = useState(true);
   const [myGoals, setMyGoals] = useState([]);
@@ -128,16 +129,16 @@ function App() {
   }, [user]);
 
   const filteredPublicGoals = useMemo(() => {
-    if (typeFilter === 'all') return publicGoals;
-    const typeValue = typeFilter === 'one' ? 'one' : typeFilter;
+    if (publicFilter === 'all') return publicGoals;
+    const typeValue = publicFilter === 'one' ? 'one' : publicFilter;
     return publicGoals.filter((goal) => goal.type === typeValue);
-  }, [publicGoals, typeFilter]);
+  }, [publicGoals, publicFilter]);
 
   const filteredMyGoals = useMemo(() => {
-    if (typeFilter === 'all') return myGoals;
-    const typeValue = typeFilter === 'one' ? 'one' : typeFilter;
+    if (myFilter === 'all') return myGoals;
+    const typeValue = myFilter === 'one' ? 'one' : myFilter;
     return myGoals.filter((goal) => goal.type === typeValue);
-  }, [myGoals, typeFilter]);
+  }, [myGoals, myFilter]);
 
   const handleCreateGoal = async ({ text, type, deadline, isPublic }) => {
     if (!user || creatingGoal) return;
@@ -400,9 +401,6 @@ function App() {
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        filter={typeFilter}
-        onFilterChange={setTypeFilter}
-        filters={FILTERS}
         username={sidebarUsername}
         onUsernameSave={handleUsernameChange}
         onLogout={handleLogout}
@@ -414,13 +412,19 @@ function App() {
 
       <main className="content-area">
         {activeTab === TABS.FEED && (
-          <Feed goals={filteredPublicGoals} loading={publicLoading} />
+          <Feed
+            goals={filteredPublicGoals}
+            loading={publicLoading}
+            filter={publicFilter}
+            onFilterChange={setPublicFilter}
+            filters={FILTERS}
+          />
         )}
         {activeTab === TABS.NEW && (
           <NewGoal
             onCreate={handleCreateGoal}
             submitting={creatingGoal}
-            defaultType={typeFilter}
+            defaultType="one"
           />
         )}
         {activeTab === TABS.MINE && (
@@ -429,6 +433,9 @@ function App() {
             loading={myGoalsLoading}
             onUpdate={handleUpdateGoal}
             onDelete={handleDeleteGoal}
+            filter={myFilter}
+            onFilterChange={setMyFilter}
+            filters={FILTERS}
           />
         )}
       </main>

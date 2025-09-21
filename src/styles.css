@@ -197,31 +197,6 @@ input[type='checkbox'] {
   border-color: var(--c-accent);
 }
 
-.filter-chips {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.chip {
-  border-radius: 999px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: inherit;
-  padding: 0.5rem 1.25rem;
-  font-size: 0.95rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chip.active,
-.chip:hover {
-  background: var(--c-text-2);
-  color: var(--c-primary);
-  border-color: var(--c-text-2);
-}
-
 .sidebar-footer {
   margin-top: auto;
   display: grid;
@@ -337,15 +312,61 @@ input[type='checkbox'] {
   font-size: 2rem;
 }
 
+.page-header__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .page-header p {
   margin: 0.5rem 0 0;
   color: rgba(10, 10, 10, 0.65);
+}
+
+.filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-tab {
+  border: none;
+  border-radius: 999px;
+  background: var(--c-primary);
+  color: var(--c-text-2);
+  padding: 0.45rem 1.2rem;
+  font-size: 0.95rem;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.filter-tab:not(.active):hover,
+.filter-tab:not(.active):focus-visible {
+  background: #144c7f;
+}
+
+.filter-tab.active {
+  background: var(--c-accent);
+}
+
+.filter-tab:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
 }
 
 .goal-grid {
   display: grid;
   gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.goal-grid--single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .goal-card {
@@ -388,6 +409,7 @@ input[type='checkbox'] {
   align-items: flex-start;
   gap: 0.35rem;
   flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .goal-text--collapsed {
@@ -396,6 +418,11 @@ input[type='checkbox'] {
   -webkit-line-clamp: 1;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.goal-text {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .goal-text--expanded {
@@ -467,6 +494,7 @@ input[type='checkbox'] {
   font-size: 1.05rem;
   line-height: 1.6;
   font-weight: 500;
+  min-width: 0;
 }
 
 .goal-edit-actions {
@@ -652,7 +680,10 @@ input[type='checkbox'] {
   }
 
   .sidebar {
-    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
   }
 
   .content-area {
