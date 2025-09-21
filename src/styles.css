@@ -364,6 +364,14 @@ textarea {
   color: rgba(10, 10, 10, 0.7);
 }
 
+.goal-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .goal-edit-form {
   display: grid;
   gap: 0.75rem;
@@ -391,6 +399,16 @@ textarea {
   display: grid;
   gap: 1rem;
   max-width: 520px;
+}
+
+.deadline-preview {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(10, 10, 10, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .goal-form label {

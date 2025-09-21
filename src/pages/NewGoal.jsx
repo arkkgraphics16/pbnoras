@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import useCountdown, { formatCountdown } from '../hooks/useCountdown';
 
 const typeOptions = [
   { value: 'one', label: 'One-Time' },
@@ -15,6 +16,20 @@ function NewGoal({ onCreate, submitting, defaultType }) {
   const [isPublic, setIsPublic] = useState(true);
   const [error, setError] = useState('');
 
+  const deadlineDate = useMemo(() => {
+    if (!deadline) return null;
+    const parsed = new Date(deadline);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [deadline]);
+
+  const countdown = useCountdown(deadlineDate);
+
+  const countdownLabel = useMemo(() => {
+    if (!deadlineDate || !countdown) return '';
+    if (countdown.isExpired) return 'Deadline passed';
+    return `Time remaining: ${formatCountdown(countdown)}`;
+  }, [deadlineDate, countdown]);
+
   useEffect(() => {
     if (typeOptions.some((option) => option.value === defaultType)) {
       setType(defaultType);
@@ -28,7 +43,6 @@ function NewGoal({ onCreate, submitting, defaultType }) {
       return;
     }
     setError('');
-    const deadlineDate = deadline ? new Date(deadline) : null;
     await onCreate({ text: text.trim(), type, deadline: deadlineDate, isPublic });
     setText('');
     setDeadline('');
@@ -66,6 +80,11 @@ function NewGoal({ onCreate, submitting, defaultType }) {
           Deadline
           <input type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} />
         </label>
+        {deadlineDate && countdownLabel && (
+          <p className="deadline-preview" aria-live="polite">
+            {countdownLabel}
+          </p>
+        )}
         <label className="public-toggle">
           <input
             type="checkbox"
